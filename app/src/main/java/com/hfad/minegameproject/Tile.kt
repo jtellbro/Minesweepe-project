@@ -1,6 +1,11 @@
 package com.hfad.minegameproject
 
+import android.widget.ImageView
+
 class Tile {
+    var row : Int = 0
+    var col : Int = 0
+    lateinit var tileView : ImageView
     enum class State {
         HIDDEN,
         FLAGGED,

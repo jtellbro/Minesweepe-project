@@ -1,5 +1,6 @@
 package com.hfad.minegameproject
 
+import android.annotation.SuppressLint
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.View
@@ -57,14 +58,21 @@ class MainActivity : AppCompatActivity() {
     /** Skapar en ny ImageView för varje Tile-objekt i spelbrädet
      *
      */
+    @SuppressLint("SuspiciousIndentation")
     fun setUpGame() {
         plantMines()
         calculateNumbers()
+        var test = ""
         for (array in gameBoardCells)
             for (elements in array) {
+                elements.row = gameBoardCells.indexOf(array)
+                elements.col = array.indexOf(elements)
+
                 //Test för att se om rätt bild visas
                 //elements.reveal()
                 var newView: ImageView = ImageView(this)
+
+                elements.tileView = newView
                 gameboard.addView(newView)
                 newView.layoutParams.height = 100
                 newView.layoutParams.width = 100
@@ -79,7 +87,11 @@ class MainActivity : AppCompatActivity() {
                  */
                 newView.setOnClickListener(View.OnClickListener {
                     //visa ruta/rutor om den/de är numbered, om det är en mina = Game Over
-                    updateBoard(newView, elements)
+                    // om rutan är 0 kolla detta:
+                    var row = elements.row
+                    var col = elements.col
+                        revealCell(row, col)
+                            // titta efter vinst.
                 })
                 newView.setOnLongClickListener(View.OnLongClickListener {
                     //Placera ut flagga på den ruta som klickats på
@@ -108,34 +120,29 @@ class MainActivity : AppCompatActivity() {
             }
         currentView.setImageDrawable(image)
     }
-    fun updateBoard(currentView : ImageView, currentTile : Tile) {
-        currentTile.reveal()
-        setDrawables(currentView, currentTile)
+    fun updateBoard(currentTile : Tile) {
+        var imView = currentTile.tileView
+        setDrawables(imView, currentTile)
     }
-    private fun revealCell(row: Int, col: Int): Boolean {
-        val cell = gameBoardCells[row][col]
-        if (cell.isRevealed || cell.isFlagged) {
-            return false
+    private fun revealCell(row : Int, col : Int) {
+        var currentTile = gameBoardCells[row][col]
+        if (!currentTile.isRevealed && !currentTile.isFlagged) {
+            currentTile.reveal()
+            // if currentTile.isMine {lose}
         }
 
-        cell.isRevealed = true
-
-        if (cell.isMine) {
-            return true
-        }
-
-        if (cell.numberOfMinedNeighbours == 0) {
+        if (currentTile.numberOfMinedNeighbours == 0) {
             revealAdjacentCells(row, col)
         }
-
-        return false
+        updateBoard(currentTile)
     }
+
     private fun revealAdjacentCells(row: Int, col: Int) {
         for (i in -1..1) {
             for (j in -1..1) {
                 val newRow = row + i
                 val newCol = col + j
-                if (newRow in 0 until rows && newCol in 0 until columns) {
+                if (newRow in 0 until rows && newCol in 0 until columns && !gameBoardCells[newRow][newCol].isRevealed) {
                     revealCell(newRow, newCol)
                 }
             }
