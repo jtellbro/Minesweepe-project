@@ -63,13 +63,14 @@ class MainActivity : AppCompatActivity() {
         for (array in gameBoardCells)
             for (elements in array) {
                 //Test för att se om rätt bild visas
-                elements.reveal()
+                //elements.reveal()
                 var newView: ImageView = ImageView(this)
                 gameboard.addView(newView)
                 newView.layoutParams.height = 100
                 newView.layoutParams.width = 100
                 //kalla på metod som sätter drawable beroende på isRevealed och state?
-                newView.setImageDrawable(setDrawables(elements))
+                setDrawables(newView, elements)
+                //newView.setImageDrawable(setDrawables(elements))
 
                 /** sätta lyssnare för "långt klick" för att flagga?
                  * Kalla på funktion som kollar vilket state en tile befinner sig i,
@@ -77,15 +78,14 @@ class MainActivity : AppCompatActivity() {
                  * varje tile har?
                  */
                 newView.setOnClickListener(View.OnClickListener {
-
+                    //visa ruta/rutor om den/de är numbered, om det är en mina = Game Over
+                    updateBoard(newView, elements)
                 })
                 newView.setOnLongClickListener(View.OnLongClickListener {
-
+                    //Placera ut flagga på den ruta som klickats på
                     true
                 })
             }
-        //Uppdatera brädet
-        //updateBoard(gameboard)
     }
     // Kallar på funktion i Tile.kt som ändrar isFlagged till true/false
     fun toggleFlag(currentTile: Tile) {
@@ -98,38 +98,47 @@ class MainActivity : AppCompatActivity() {
      * Redundant? varför har jag lagt till childviews? För att hitta och ändra view och
      * dess drawable?
      */
-    fun setDrawables(currentTile : Tile) : Drawable {
+    fun setDrawables(currentView : ImageView, currentTile : Tile){
         lateinit var image : Drawable
-        if(currentTile.isRevealed){
             when(currentTile.state) {
                 Tile.State.MINE -> image = resources.getDrawable(R.drawable.mine_tile)
                 Tile.State.FLAGGED -> image = resources.getDrawable(R.drawable.flag_tile)
                 Tile.State.HIDDEN -> image = resources.getDrawable(R.drawable.tile_hidden)
                 Tile.State.NUMBERED -> image = numberedTile(currentTile.numberOfMinedNeighbours)
             }
-        }
-        return image
+        currentView.setImageDrawable(image)
     }
-    fun updateBoard(gameboard: GridLayout) {
-        var childCount = gameboard.childCount
-        var cells = gameBoardCells.flatten()
-        var counter = 0
-        while (counter < childCount) {
-            for (tiles in cells) {
-                var currentView = gameboard.getChildAt(counter)
-                var image = when (tiles.state) {
-                    Tile.State.HIDDEN -> resources.getDrawable(R.drawable.tile_hidden)
-                    Tile.State.FLAGGED -> resources.getDrawable(R.drawable.flag_tile)
-                    Tile.State.MINE -> resources.getDrawable(R.drawable.mine_tile)
-                    Tile.State.NUMBERED -> numberedTile(tiles.numberOfMinedNeighbours)
-                }
-                currentView as ImageView
-                currentView.setImageDrawable(image)
-            }
-            //test för att se om något ändras
-            setText(gameBoardCells.flatten().toString())
-            counter++
+    fun updateBoard(currentView : ImageView, currentTile : Tile) {
+        currentTile.reveal()
+        setDrawables(currentView, currentTile)
+    }
+    private fun revealCell(row: Int, col: Int): Boolean {
+        val cell = gameBoardCells[row][col]
+        if (cell.isRevealed || cell.isFlagged) {
+            return false
+        }
 
+        cell.isRevealed = true
+
+        if (cell.isMine) {
+            return true
+        }
+
+        if (cell.numberOfMinedNeighbours == 0) {
+            revealAdjacentCells(row, col)
+        }
+
+        return false
+    }
+    private fun revealAdjacentCells(row: Int, col: Int) {
+        for (i in -1..1) {
+            for (j in -1..1) {
+                val newRow = row + i
+                val newCol = col + j
+                if (newRow in 0 until rows && newCol in 0 until columns) {
+                    revealCell(newRow, newCol)
+                }
+            }
         }
     }
 
@@ -163,7 +172,7 @@ class MainActivity : AppCompatActivity() {
                 randomTile.plantMine()
                 counter++
                 // Ta bort reveal, endast för att testa om olika tiles blir minor
-                randomTile.reveal()
+                //randomTile.reveal()
             }
         }
         return allTiles
