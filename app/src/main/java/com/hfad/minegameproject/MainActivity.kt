@@ -35,7 +35,6 @@ class MainActivity : AppCompatActivity() {
 
         setUpGame()
 
-        setText(plantMines().toString())
     }
 
     fun setText(text: String){
@@ -70,7 +69,7 @@ class MainActivity : AppCompatActivity() {
                 newView.layoutParams.height = 100
                 newView.layoutParams.width = 100
                 //kalla på metod som sätter drawable beroende på isRevealed och state?
-                newView.setImageDrawable(setDrawables(newView, elements))
+                newView.setImageDrawable(setDrawables(elements))
 
                 /** sätta lyssnare för "långt klick" för att flagga?
                  * Kalla på funktion som kollar vilket state en tile befinner sig i,
@@ -78,16 +77,15 @@ class MainActivity : AppCompatActivity() {
                  * varje tile har?
                  */
                 newView.setOnClickListener(View.OnClickListener {
-                    checkTile(elements)
+
                 })
                 newView.setOnLongClickListener(View.OnLongClickListener {
-                    toggleFlag(elements)
-                    updateBoard(gameboard)
+
                     true
                 })
             }
         //Uppdatera brädet
-        updateBoard(gameboard)
+        //updateBoard(gameboard)
     }
     // Kallar på funktion i Tile.kt som ändrar isFlagged till true/false
     fun toggleFlag(currentTile: Tile) {
@@ -100,8 +98,16 @@ class MainActivity : AppCompatActivity() {
      * Redundant? varför har jag lagt till childviews? För att hitta och ändra view och
      * dess drawable?
      */
-    fun setDrawables(currentView : ImageView, currentTile : Tile) : Drawable {
-        var image = resources.getDrawable(R.drawable.tile_hidden)
+    fun setDrawables(currentTile : Tile) : Drawable {
+        lateinit var image : Drawable
+        if(currentTile.isRevealed){
+            when(currentTile.state) {
+                Tile.State.MINE -> image = resources.getDrawable(R.drawable.mine_tile)
+                Tile.State.FLAGGED -> image = resources.getDrawable(R.drawable.flag_tile)
+                Tile.State.HIDDEN -> image = resources.getDrawable(R.drawable.tile_hidden)
+                Tile.State.NUMBERED -> image = numberedTile(currentTile.numberOfMinedNeighbours)
+            }
+        }
         return image
     }
     fun updateBoard(gameboard: GridLayout) {
@@ -164,14 +170,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun calculateNumbers() {
+        var testNum : String = ""
         for (row in 0 until rows) {
             for (col in 0 until columns) {
                 if (!gameBoardCells[row][col].isMine) {
                     val count = countAdjacentMines(row, col)
+                    testNum += count
                     gameBoardCells[row][col].numberOfMinedNeighbours = count
                 }
             }
         }
+        binding.checkNumbers.text = testNum
     }
 
     private fun countAdjacentMines(row: Int, col: Int): Int {
