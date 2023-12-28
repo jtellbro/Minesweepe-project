@@ -36,16 +36,6 @@ class MainActivity : AppCompatActivity() {
         setUpGame()
 
         setText(plantMines().toString())
-        //binding.testText.text = gameBoardCells[0][3].toString()
-
-
-        //val rootView = binding.rootLayout
-        //val gameboard = binding.gameBoard
-        //var newView: ImageView
-        //newView = ImageView(this)
-        //gameboard.addView(newView)
-        
-        //newView.setImageDrawable(resources.getDrawable(R.drawable.tile_hidden))
     }
 
     fun setText(text: String){
@@ -81,7 +71,6 @@ class MainActivity : AppCompatActivity() {
                 newView.layoutParams.width = 100
                 //kalla på metod som sätter drawable beroende på isRevealed och state?
                 newView.setImageDrawable(setDrawables(newView, elements))
-                //newView.setImageDrawable(resources.getDrawable(R.drawable.tile_hidden))
 
                 /** sätta lyssnare för "långt klick" för att flagga?
                  * Kalla på funktion som kollar vilket state en tile befinner sig i,
@@ -89,11 +78,9 @@ class MainActivity : AppCompatActivity() {
                  * varje tile har?
                  */
                 newView.setOnClickListener(View.OnClickListener {
-                    //newView.setImageDrawable((resources.getDrawable(R.drawable.mine_tile)))
                     checkTile(elements)
                 })
                 newView.setOnLongClickListener(View.OnLongClickListener {
-                    //newView.setImageDrawable((resources.getDrawable(R.drawable.flag_tile)))
                     toggleFlag(elements)
                     updateBoard(gameboard)
                     true
