@@ -42,18 +42,6 @@ class MainActivity : AppCompatActivity() {
         binding.testText.text = text
     }
 
-    fun checkTile(clickedTile: Tile) {
-        if(!clickedTile.isRevealed) {
-            clickedTile.reveal()
-        }
-           // if(clickedTile.state == Tile.State.MINE){
-           //     // Game over
-            // } else {
-                //clickedTile.reveal()
-                // Kalla på metod som visar vad som är under rutorna
-        //updateBoard(gameboard)
-
-    }
 
     /** Skapar en ny ImageView för varje Tile-objekt i spelbrädet
      *
@@ -78,7 +66,6 @@ class MainActivity : AppCompatActivity() {
                 newView.layoutParams.width = 100
                 //kalla på metod som sätter drawable beroende på isRevealed och state?
                 setDrawables(newView, elements)
-                //newView.setImageDrawable(setDrawables(elements))
 
                 /** sätta lyssnare för "långt klick" för att flagga?
                  * Kalla på funktion som kollar vilket state en tile befinner sig i,
@@ -95,14 +82,16 @@ class MainActivity : AppCompatActivity() {
                 })
                 newView.setOnLongClickListener(View.OnLongClickListener {
                     //Placera ut flagga på den ruta som klickats på
+                    toggleFlag(elements)
                     true
                 })
             }
     }
     // Kallar på funktion i Tile.kt som ändrar isFlagged till true/false
+    // Skapa knapp som ändrar till flaggningstryck.
     fun toggleFlag(currentTile: Tile) {
         currentTile.toggleFlag()
-
+        updateBoard(currentTile)
     }
 
     /** Kontrollerar hur många childviews gameBoard har och ska ändra vilken bild
@@ -112,23 +101,38 @@ class MainActivity : AppCompatActivity() {
      */
     fun setDrawables(currentView : ImageView, currentTile : Tile){
         lateinit var image : Drawable
-            when(currentTile.state) {
-                Tile.State.MINE -> image = resources.getDrawable(R.drawable.mine_tile)
-                Tile.State.FLAGGED -> image = resources.getDrawable(R.drawable.flag_tile)
-                Tile.State.HIDDEN -> image = resources.getDrawable(R.drawable.tile_hidden)
-                Tile.State.NUMBERED -> image = numberedTile(currentTile.numberOfMinedNeighbours)
-            }
+        when(currentTile.state) {
+            Tile.State.MINE -> image = resources.getDrawable(R.drawable.mine_tile)
+            Tile.State.FLAGGED -> image = resources.getDrawable(R.drawable.flag_tile)
+            Tile.State.HIDDEN -> image = resources.getDrawable(R.drawable.tile_hidden)
+            // tilestate för detonerad bomb för alla eller de som ej flaggats?
+            Tile.State.NUMBERED -> image = numberedTile(currentTile.numberOfMinedNeighbours)
+        }
         currentView.setImageDrawable(image)
     }
     fun updateBoard(currentTile : Tile) {
         var imView = currentTile.tileView
         setDrawables(imView, currentTile)
     }
+
+    fun gameOver() {
+        var revealAll = gameBoardCells.flatten()
+        for (tile in revealAll){
+            if (!tile.isRevealed){
+                tile.reveal()
+            }
+            // uppdatera spelplanen om en bomb blivit tryckt
+            updateBoard(tile)
+        }
+    }
+
     private fun revealCell(row : Int, col : Int) {
         var currentTile = gameBoardCells[row][col]
         if (!currentTile.isRevealed && !currentTile.isFlagged) {
             currentTile.reveal()
-            // if currentTile.isMine {lose}
+            if (currentTile.isMine) {
+                gameOver()
+            }
         }
 
         if (currentTile.numberOfMinedNeighbours == 0) {
@@ -167,7 +171,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     // Ändrar state på Tile till mina? Returnerar lista så att jag ska kunna
     // kontrollera om det ändras, kan tar bort returtyp sen?
     fun plantMines() : List<Tile>{
@@ -178,8 +181,6 @@ class MainActivity : AppCompatActivity() {
             if(!randomTile.isMine) {
                 randomTile.plantMine()
                 counter++
-                // Ta bort reveal, endast för att testa om olika tiles blir minor
-                //randomTile.reveal()
             }
         }
         return allTiles
