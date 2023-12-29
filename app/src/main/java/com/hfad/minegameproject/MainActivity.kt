@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
 import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -17,6 +18,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var rootView : LinearLayout
     lateinit var gameboard : GridLayout
     lateinit var gameBoardCells : List<List<Tile>>
+    lateinit var resetBtn : Button
     var rows = 8
     var columns = 8
     var mines = 10
@@ -29,7 +31,11 @@ class MainActivity : AppCompatActivity() {
 
         rootView = binding.rootLayout
         gameboard = binding.gameBoard
+        resetBtn = binding.resetButton
 
+        resetBtn.setOnClickListener(){
+            setUpGame()
+        }
         //Skapar bräde med celler, lista med listor rows*columns, där varje cell består
         //av objekt av typen Tile
         gameBoardCells = List(rows){ List(columns) { Tile()}}
@@ -48,6 +54,7 @@ class MainActivity : AppCompatActivity() {
      */
     @SuppressLint("SuspiciousIndentation")
     fun setUpGame() {
+        resetBoard()
         plantMines()
         calculateNumbers()
         var test = ""
@@ -72,8 +79,10 @@ class MainActivity : AppCompatActivity() {
                     // om rutan är 0 kolla detta:
                     var row = elements.row
                     var col = elements.col
-                    if(!elements.isRevealed && !elements.isFlagged)
+                    if(!elements.isRevealed && !elements.isFlagged){
                         revealCell(row, col)
+                        gameWon()
+                    }
                             // titta efter vinst.
                 })
                 newView.setOnLongClickListener(View.OnLongClickListener {
@@ -111,27 +120,42 @@ class MainActivity : AppCompatActivity() {
         setDrawables(imView, currentTile)
     }
 
-    fun gameOver(currentTile : Tile) {
+    fun revealBoard(){
         var revealAll = gameBoardCells.flatten()
-        for (tile in revealAll){
-            if (!tile.isRevealed){
+        for (tile in revealAll) {
+            if (!tile.isRevealed) {
                 tile.reveal()
             }
-            // uppdatera spelplanen om en bomb blivit tryckt
             updateBoard(tile)
-            currentTile.tileView.setImageDrawable(resources.getDrawable(R.drawable.mine_detonated))
         }
     }
 
-    fun gameWon(){
-        var tileCount = 0
-        // Kollar hur många tiles som är revealed och +tileCount
-        // Om  tileCount == gameBoardCells - mines
-        // game won!
-        // avslöja alla tiles.
-        if (tileCount == gameBoardCells - mines){
+    private fun gameOver(currentTile : Tile) {
+        revealBoard()
+        currentTile.tileView.setImageDrawable(resources.getDrawable(R.drawable.mine_detonated))
+        setText("You lost!")
+    }
 
+    private fun gameWon(){
+        // Kollar hur många tiles som är revealed och adderar reavealedTiles
+        var revealedTiles : Int = 0
+        var totalAmountOfTiles : Int = rows*columns
+        for(array in gameBoardCells){
+            for (elements in array){
+                if (elements.isRevealed)
+                    revealedTiles++
+            }
         }
+        if (revealedTiles == totalAmountOfTiles - mines){
+            revealBoard()
+            setText("You won!")
+            // game won!
+            // avslöja alla tiles.
+        }
+    }
+
+    private fun resetBoard() {
+        gameBoardCells.flatten().filter { it.isMine }.forEach { tile -> tile.removeMine() }
     }
 
     private fun revealCell(row : Int, col : Int) {
