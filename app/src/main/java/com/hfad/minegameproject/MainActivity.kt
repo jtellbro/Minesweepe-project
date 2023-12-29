@@ -62,21 +62,17 @@ class MainActivity : AppCompatActivity() {
 
                 elements.tileView = newView
                 gameboard.addView(newView)
-                newView.layoutParams.height = 100
-                newView.layoutParams.width = 100
+                newView.layoutParams.height = 80
+                newView.layoutParams.width = 80
                 //kalla på metod som sätter drawable beroende på isRevealed och state?
                 setDrawables(newView, elements)
 
-                /** sätta lyssnare för "långt klick" för att flagga?
-                 * Kalla på funktion som kollar vilket state en tile befinner sig i,
-                 * för att sedan kalla på andra funktioner beroende på vilket state
-                 * varje tile har?
-                 */
                 newView.setOnClickListener(View.OnClickListener {
                     //visa ruta/rutor om den/de är numbered, om det är en mina = Game Over
                     // om rutan är 0 kolla detta:
                     var row = elements.row
                     var col = elements.col
+                    if(!elements.isRevealed && !elements.isFlagged)
                         revealCell(row, col)
                             // titta efter vinst.
                 })
@@ -115,7 +111,7 @@ class MainActivity : AppCompatActivity() {
         setDrawables(imView, currentTile)
     }
 
-    fun gameOver() {
+    fun gameOver(currentTile : Tile) {
         var revealAll = gameBoardCells.flatten()
         for (tile in revealAll){
             if (!tile.isRevealed){
@@ -123,6 +119,7 @@ class MainActivity : AppCompatActivity() {
             }
             // uppdatera spelplanen om en bomb blivit tryckt
             updateBoard(tile)
+            currentTile.tileView.setImageDrawable(resources.getDrawable(R.drawable.mine_detonated))
         }
     }
 
@@ -130,15 +127,16 @@ class MainActivity : AppCompatActivity() {
         var currentTile = gameBoardCells[row][col]
         if (!currentTile.isRevealed && !currentTile.isFlagged) {
             currentTile.reveal()
-            if (currentTile.isMine) {
-                gameOver()
+            if (currentTile.numberOfMinedNeighbours == 0) {
+                revealAdjacentCells(row, col)
             }
+            updateBoard(currentTile)
+        }
+        if (currentTile.isMine) {
+            gameOver(currentTile)
         }
 
-        if (currentTile.numberOfMinedNeighbours == 0) {
-            revealAdjacentCells(row, col)
-        }
-        updateBoard(currentTile)
+
     }
 
     private fun revealAdjacentCells(row: Int, col: Int) {
