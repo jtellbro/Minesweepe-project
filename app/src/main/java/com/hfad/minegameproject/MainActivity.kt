@@ -135,7 +135,8 @@ class MainActivity : AppCompatActivity() {
         revealBoard()
         currentTile.tileView.setImageDrawable(resources.getDrawable(R.drawable.mine_detonated))
         timer.stop()
-        setText("You lost!")
+        var elapsedTime = elapsedTime()
+        setText("You lost! Your time was $elapsedTime seconds")
     }
 
     private fun gameWon(){
@@ -151,10 +152,17 @@ class MainActivity : AppCompatActivity() {
         if (revealedTiles == totalAmountOfTiles - mines){
             revealBoard()
             timer.stop()
-            setText("You won!")
+            var elapsedTime = elapsedTime()
+            setText("You won! Your time was $elapsedTime seconds")
             // game won!
             // avslöja alla tiles.
         }
+    }
+
+    fun elapsedTime() : Double {
+        var elapsedTime = SystemClock.elapsedRealtime() - timer.base
+        // Omvandlar tid från millisekunder till sekunder m 2 decimaler
+        return (elapsedTime/10)/100.0
     }
 
     private fun resetBoard() {
