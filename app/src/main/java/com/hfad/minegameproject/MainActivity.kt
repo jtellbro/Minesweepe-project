@@ -123,6 +123,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun gameWon(){
+        var tileCount = 0
+        // Kollar hur många tiles som är revealed och +tileCount
+        // Om  tileCount == gameBoardCells - mines
+        // game won!
+        // avslöja alla tiles.
+        if (tileCount == gameBoardCells - mines){
+
+        }
+    }
+
     private fun revealCell(row : Int, col : Int) {
         var currentTile = gameBoardCells[row][col]
         if (!currentTile.isRevealed && !currentTile.isFlagged) {
