@@ -3,8 +3,10 @@ package com.hfad.minegameproject
 import android.annotation.SuppressLint
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.View
 import android.widget.Button
+import android.widget.Chronometer
 import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -19,6 +21,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var gameboard : GridLayout
     lateinit var gameBoardCells : List<List<Tile>>
     lateinit var resetBtn : Button
+    lateinit var timer : Chronometer
     var rows = 8
     var columns = 8
     var mines = 10
@@ -32,6 +35,7 @@ class MainActivity : AppCompatActivity() {
         rootView = binding.rootLayout
         gameboard = binding.gameBoard
         resetBtn = binding.resetButton
+        timer = binding.timer
 
         resetBtn.setOnClickListener(){
             setUpGame()
@@ -41,7 +45,6 @@ class MainActivity : AppCompatActivity() {
         gameBoardCells = List(rows){ List(columns) { Tile()}}
 
         setUpGame()
-
     }
 
     fun setText(text: String){
@@ -54,16 +57,15 @@ class MainActivity : AppCompatActivity() {
      */
     @SuppressLint("SuspiciousIndentation")
     fun setUpGame() {
+        var firstClick = true
         resetBoard()
         plantMines()
         calculateNumbers()
-        var test = ""
         for (array in gameBoardCells)
             for (elements in array) {
                 elements.row = gameBoardCells.indexOf(array)
                 elements.col = array.indexOf(elements)
 
-                //Test för att se om rätt bild visas
                 //elements.reveal()
                 var newView: ImageView = ImageView(this)
 
@@ -75,18 +77,17 @@ class MainActivity : AppCompatActivity() {
                 setDrawables(newView, elements)
 
                 newView.setOnClickListener(View.OnClickListener {
-                    //visa ruta/rutor om den/de är numbered, om det är en mina = Game Over
-                    // om rutan är 0 kolla detta:
-                    var row = elements.row
-                    var col = elements.col
                     if(!elements.isRevealed && !elements.isFlagged){
-                        revealCell(row, col)
+                        revealCell(elements.row, elements.col)
                         gameWon()
                     }
-                            // titta efter vinst.
+                    if (firstClick){
+                        setBaseTime()
+                        timer.start()
+                        firstClick = false
+                    }
                 })
                 newView.setOnLongClickListener(View.OnLongClickListener {
-                    //Placera ut flagga på den ruta som klickats på
                     toggleFlag(elements)
                     true
                 })
@@ -133,6 +134,7 @@ class MainActivity : AppCompatActivity() {
     private fun gameOver(currentTile : Tile) {
         revealBoard()
         currentTile.tileView.setImageDrawable(resources.getDrawable(R.drawable.mine_detonated))
+        timer.stop()
         setText("You lost!")
     }
 
@@ -148,6 +150,7 @@ class MainActivity : AppCompatActivity() {
         }
         if (revealedTiles == totalAmountOfTiles - mines){
             revealBoard()
+            timer.stop()
             setText("You won!")
             // game won!
             // avslöja alla tiles.
@@ -155,7 +158,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun resetBoard() {
+        // om tile är mine, ta bort från gameboard.
         gameBoardCells.flatten().filter { it.isMine }.forEach { tile -> tile.removeMine() }
+        // om tile är avslöjad, göm den igen.
+        gameBoardCells.flatten().filter { it.isRevealed }.forEach { tile -> tile.hide() }
+        // ta bort view.
+        gameboard.removeAllViews()
     }
 
     private fun revealCell(row : Int, col : Int) {
@@ -245,5 +253,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
         return count
+    }
+    fun setBaseTime() {
+        binding.timer.base = SystemClock.elapsedRealtime() - 0
     }
 }

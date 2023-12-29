@@ -18,6 +18,11 @@ class Tile {
         isMine = true
     }
 
+    fun hide() {
+        if(!isRevealed) return
+        isRevealed = false
+    }
+
     fun reveal() {
         if(isRevealed) return
         isRevealed = true
